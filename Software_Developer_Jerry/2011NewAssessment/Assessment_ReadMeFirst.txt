@@ -86,17 +86,7 @@ static void sort2(int[] data)
 3. [C# Program] Please complete the attached file, /programming-test/c-sharp/c-sharp-test.cs. It must be executable with the requirement specified inside the code.
 
 
-
-
-
-
-
-
-
-
-
-
-
+Done. Please refer to /programming-test/c-sharp/c-sharp-test.cs.
 
 
 
