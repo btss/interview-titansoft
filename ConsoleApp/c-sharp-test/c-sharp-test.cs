@@ -20,20 +20,6 @@ namespace ApplicantTestin
             this.Ref = null;
         }
 
-        public int GetFinalValue()
-        {
-            int v = this.Value;
-
-            DataObject r = this.Ref;
-            while (r != null && r != this)
-            {
-                v = r.Value;
-                r = r.Ref;
-            }
-
-            return v;
-        }
-
         public DataObject GetFinalRef()
         {
             DataObject r = this;
@@ -47,14 +33,20 @@ namespace ApplicantTestin
 
         public string GetRefPath()
         {
+            Stack<DataObject> stack = new Stack<DataObject>();
             StringBuilder sbPath = new StringBuilder();
 
             DataObject r = this;
-            sbPath.Append(r.Name).Append(".");
+            stack.Push(r);
             while (r.Ref != null && r.Ref != this)
             {
                 r = r.Ref;
-                sbPath.Append(r.Name).Append(".");
+                stack.Push(r);
+            }
+
+            while(stack.Count > 0)
+            {
+                sbPath.Append(stack.Pop().Name);
             }
 
             return sbPath.ToString();
@@ -323,25 +315,21 @@ namespace ApplicantTestin
                 if (yFianlRef.Value < xFianlRef.Value) return -1;
                 if (yFianlRef.Value > xFianlRef.Value) return 1;
 
-                // compare final ref's name
+                // compare final ref
                 if (xFianlRef != yFianlRef) return xFianlRef.Name.CompareTo(yFianlRef.Name);
 
-                //
-                if (yDataObject.isRefPathContain(xDataObject)) return -1;
-                if (xDataObject.isRefPathContain(yDataObject)) return 1;
-
                 // compare ref
-                //if (xDataObject.Ref == null && yDataObject.Ref == null) return xDataObject.Name.CompareTo(yDataObject.Name);
+                if (xDataObject.Ref == null && yDataObject.Ref != null) return -1;
+                if (xDataObject.Ref != null && yDataObject.Ref == null) return 1;
 
+                // the ref path is the same, compare name
+                //if(xRefPath.Equals(yRefPath)) return xDataObject.Name.CompareTo(yDataObject.Name);
+                if (xDataObject.Ref == yDataObject.Ref) return xDataObject.Name.CompareTo(yDataObject.Name);
 
-                // comapre ref path
-                //string xRefPath = xDataObject.GetRefPath();
-                //string yRefPath = yDataObject.GetRefPath();
-                //if (yRefPath.IndexOf(xRefPath) != -1) return -1;
-                //if (xRefPath.IndexOf(yRefPath) != -1) return 1;
-
-                // compare name
-                return xDataObject.Name.CompareTo(yDataObject.Name);
+                // compare ref path
+                string xRefPath = xDataObject.GetRefPath();
+                string yRefPath = yDataObject.GetRefPath();
+                return xRefPath.CompareTo(yRefPath);
             }
         }
     }
