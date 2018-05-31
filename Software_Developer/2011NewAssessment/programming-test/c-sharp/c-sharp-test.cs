@@ -8,10 +8,66 @@ namespace ApplicantTestin
 	/// The DataObject class stored with a key
 	class DataObject
 	{
-		// Populate
-	}
+        public string Name { get; set; }
+        public int Value { get; set; }
+        public DataObject Ref { get; set; }
 
-	class Program
+        public DataObject(string name)
+        {
+            this.Name = name;
+            this.Value = 0;
+            this.Value = rand.Next(-10, 10);
+            this.Ref = null;
+        }
+
+        public DataObject GetFinalRef()
+        {
+            DataObject r = this;
+            while (r.Ref != null && r.Ref != this)
+            {
+                r = r.Ref;
+            }
+
+            return r;
+        }
+
+        public string GetRefPath()
+        {
+            Stack<DataObject> stack = new Stack<DataObject>();
+            StringBuilder sbPath = new StringBuilder();
+
+            DataObject r = this;
+            stack.Push(r);
+            while (r.Ref != null && r.Ref != this)
+            {
+                r = r.Ref;
+                stack.Push(r);
+            }
+
+            while(stack.Count > 0)
+            {
+                sbPath.Append(stack.Pop().Name);
+            }
+
+            return sbPath.ToString();
+        }
+
+        public bool isRefPathContain(DataObject dataObj)
+        {
+            DataObject r = this;
+            while (r.Ref != null && r.Ref != this)
+            {
+                if (r == dataObj) return true;
+                r = r.Ref;
+            }
+
+            return false;
+        }
+
+        private static readonly Random rand = new Random((int)DateTime.Now.Ticks);
+    }
+
+    class Program
 	{
 		static Hashtable Data = new Hashtable();
 		static string[] StaticData = new string[] { "X-Ray","Echo","Alpha", "Yankee","Bravo", "Charlie", 
@@ -58,8 +114,23 @@ namespace ApplicantTestin
 		/// <param name="key2">The reference object</param>
 		static void Ref(string key1, string key2)
 		{
-			// Populate
-		}
+            DataObject dataObj1 = GetDataObject(key1);
+            if (dataObj1 == null)
+            {
+                System.Console.WriteLine("key1 {0} not exist!", key1);
+                return;
+            }
+
+            DataObject dataObj2 = GetDataObject(key2);
+            if (dataObj2 == null)
+            {
+                System.Console.WriteLine("key2 {0} not exist!", key2);
+                return;
+            }
+
+
+            dataObj1.Ref = dataObj2;
+        }
 
 		/// <summary>
 		/// Removes an object reference on the object specified.
@@ -67,26 +138,61 @@ namespace ApplicantTestin
 		/// <param name="key">The object to remove the reference from</param>
 		static void UnRef(string key)
 		{
-			// Populate
-		}
+            DataObject dataObj = GetDataObject(key);
+            if (dataObj == null)
+            {
+                System.Console.WriteLine("key {0} not exist!", key);
+                return;
+            }
+
+            
+            dataObj.Ref = null;
+        }
 
 		/// <summary>
 		/// Swap the data objects stored in the keys specified
 		/// </summary>
 		static void Swap(string key1, string key2)
 		{
-			// Populate
+            DataObject dataObj1 = GetDataObject(key1);
+            if (dataObj1 == null)
+            {
+                System.Console.WriteLine("key1 {0} not exist!", key1);
+                return;
+            }
 
-		}
+            DataObject dataObj2 = GetDataObject(key2);
+            if (dataObj2 == null)
+            {
+                System.Console.WriteLine("key2 {0} not exist!", key2);
+                return;
+            }
 
-		/// <summary>
-		/// Decrease the Value field by 1 of the 
-		/// data object stored with the key specified
-		/// </summary>
-		static void Decrease(string key)
+            // exchange DataObject.Name
+            string name = dataObj1.Name;
+            dataObj1.Name = dataObj2.Name;
+            dataObj2.Name = name;
+
+            // exchange DataObject
+            Data[key1.ToLower()] = dataObj2;
+            Data[key2.ToLower()] = dataObj1;
+        }
+
+        /// <summary>
+        /// Decrease the Value field by 1 of the 
+        /// data object stored with the key specified
+        /// </summary>
+        static void Decrease(string key)
 		{
-			// Populate
-		}
+            DataObject dataObj = GetDataObject(key);
+            if (dataObj == null)
+            {
+                System.Console.WriteLine("key {0} not exist!", key);
+                return;
+            }
+
+            dataObj.Value -= 1;
+        }
 
 		/// <summary>
 		/// Increase the Value field by 1 of the 
@@ -94,8 +200,15 @@ namespace ApplicantTestin
 		/// </summary>
 		static void Increase(string key)
 		{
-			// Populate
-		}
+            DataObject dataObj = GetDataObject(key);
+            if (dataObj == null)
+            {
+                System.Console.WriteLine("key {0} not exist!", key);
+                return;
+            }
+
+            dataObj.Value += 1;
+        }
 
 
 		/// <summary>
@@ -114,32 +227,110 @@ namespace ApplicantTestin
 		/// 
 		/// </summary>
 		static void PrintSortedData()
-		{
-			// Populate
-		}
-	
+        {
+            SortedList list = new SortedList(Data);
 
-		/// <summary>
-		/// Prints the information in the Data hashtable to the console.
-		/// Output should be sorted by stored value
-		/// References should be printed between '<' and '>'
-		/// Sorting order start from max to min, larger value takes priority.
-		/// The output should look like the following : 
-		/// 
-		/// 
-		/// Bravo...... 100
-		/// Echo...... 99
-		/// Zulu...... 98
-		/// Charlie.... <Zulu>
-		/// Delta...... 34
-		/// Echo....... 33
-		/// Alpha...... <Echo>
-		/// --etc---
-		/// 
-		/// </summary>
-		static void PrintSortedDataByValue()
+            PrintSortedList(list);
+        }
+
+        /// <summary>
+        /// Prints the information in the Data hashtable to the console.
+        /// Output should be sorted by stored value
+        /// References should be printed between '<' and '>'
+        /// Sorting order start from max to min, larger value takes priority.
+        /// The output should look like the following : 
+        /// 
+        /// 
+        /// Bravo...... 100
+        /// Echo...... 99
+        /// Zulu...... 98
+        /// Charlie.... <Zulu>
+        /// Delta...... 34
+        /// Echo....... 33
+        /// Alpha...... <Echo>
+        /// --etc---
+        /// 
+        /// </summary>
+        static void PrintSortedDataByValue()
 		{
-			// Populate
-		}
-	}
+            // Populate
+            SortedList list = new SortedList(new DataObjectComparerByValue());
+
+            foreach(Object o in Data.Values)
+            {
+                list.Add(o, o);
+            }
+
+            PrintSortedList(list);
+        }
+
+        private static DataObject GetDataObject(string key)
+        {
+            if(key == null || key == string.Empty)
+            {
+                return null;
+            }
+
+            if(!Data.Contains(key.ToLower()))
+            {
+                return null;
+            }
+
+            return (DataObject)Data[key.ToLower()];
+        }
+
+        private static void PrintSortedList(SortedList list)
+        {
+            foreach (Object o in list.Values)
+            {
+                DataObject dataObject = (DataObject)o;
+
+                StringBuilder sbName = new StringBuilder(dataObject.Name);
+                for (int i = 0; i < (11 - dataObject.Name.Length); ++i)
+                {
+                    sbName.Append('.');
+                }
+
+
+                System.Console.WriteLine("{0} {1}"
+                    , sbName.ToString()
+                    , (dataObject.Ref == null) ? dataObject.Value.ToString() : '<' + dataObject.Ref.Name + '>'
+                    );
+            }
+
+            System.Console.WriteLine();
+        }
+
+        private class DataObjectComparerByValue : IComparer
+        {
+            public int Compare(object x, object y)
+            {
+                DataObject xDataObject = (DataObject)x;
+                DataObject yDataObject = (DataObject)y;
+
+                DataObject xFianlRef = xDataObject.GetFinalRef();
+                DataObject yFianlRef = yDataObject.GetFinalRef();
+
+                // compare final value
+                if (yFianlRef.Value < xFianlRef.Value) return -1;
+                if (yFianlRef.Value > xFianlRef.Value) return 1;
+
+                // compare final ref
+                if (xFianlRef != yFianlRef) return xFianlRef.Name.CompareTo(yFianlRef.Name);
+
+                // compare ref
+                if (xDataObject.Ref == null && yDataObject.Ref != null) return -1;
+                if (xDataObject.Ref != null && yDataObject.Ref == null) return 1;
+
+                // the ref path is the same, compare name
+                //if(xRefPath.Equals(yRefPath)) return xDataObject.Name.CompareTo(yDataObject.Name);
+                if (xDataObject.Ref == yDataObject.Ref) return xDataObject.Name.CompareTo(yDataObject.Name);
+
+                // compare ref path
+                string xRefPath = xDataObject.GetRefPath();
+                string yRefPath = yDataObject.GetRefPath();
+                return xRefPath.CompareTo(yRefPath);
+            }
+        }
+    }
 }
