@@ -1,0 +1,11 @@
+http://api.geonames.org/countryInfo?lang=it&country=DE&username=btssetnl&style=full
+
+http://api.geonames.org/countryInfoJSON?formatted=true&lang=it&country=DE&username=btssetnl&style=full
+http://api.geonames.org/countryInfoJSON?formatted=true&country=DE&username=btssetnl&style=full
+http://api.geonames.org/countryInfoJSON?formatted=true&country=DE&username=btssetnl
+http://api.geonames.org/countryInfoJSON?country=DE&username=btssetnl&style=full
+http://api.geonames.org/countryInfoJSON?country=DE&username=btssetnl
+
+
+http://api.geonames.org/countryInfoJSON?formatted=true&username=btssetnl&style=full
+http://api.geonames.org/countryInfoJSON?username=btssetnl&style=full
