@@ -2,10 +2,37 @@ http://api.geonames.org/countryInfo?lang=it&country=DE&username=btssetnl&style=f
 
 http://api.geonames.org/countryInfoJSON?formatted=true&lang=it&country=DE&username=btssetnl&style=full
 http://api.geonames.org/countryInfoJSON?formatted=true&country=DE&username=btssetnl&style=full
-http://api.geonames.org/countryInfoJSON?formatted=true&country=DE&username=btssetnl
 http://api.geonames.org/countryInfoJSON?country=DE&username=btssetnl&style=full
 http://api.geonames.org/countryInfoJSON?country=DE&username=btssetnl
 
 
 http://api.geonames.org/countryInfoJSON?formatted=true&username=btssetnl&style=full
 http://api.geonames.org/countryInfoJSON?username=btssetnl&style=full
+
+
+
+http://api.geonames.org/searchJSON?formatted=true&q=london&maxRows=10&username=btssetnl
+http://api.geonames.org/searchJSON?q=london&maxRows=10&username=btssetnl
+
+
+
+http://api.geonames.org/searchJSON?formatted=true&q=london&continentCode=EU&country=AD&maxRows=10&username=btssetnl
+http://api.geonames.org/searchJSON?formatted=true&continentCode=EU&country=AD&maxRows=10&username=btssetnl
+
+http://api.geonames.org/childrenJSON?geonameId=1668284&username=btssetnl&formatted=true
+PPLC
+http://api.geonames.org/searchJSON?formatted=true&continentCode=AS&country=TW&featureCode=PPLC&lang=zh-TW&maxRows=10&username=btssetnl
+PPLA
+http://api.geonames.org/searchJSON?formatted=true&continentCode=AS&country=TW&featureCode=PPLA&lang=zh-TW&maxRows=10&username=btssetnl
+PPLA2
+http://api.geonames.org/searchJSON?formatted=true&continentCode=AS&country=TW&featureCode=PPLA2&lang=zh-TW&maxRows=10&username=btssetnl
+
+
+
+http://api.geonames.org/childrenJSON?geonameId=6252001&username=btssetnl&formatted=true
+PPLC
+http://api.geonames.org/searchJSON?formatted=true&continentCode=NA&country=US&featureCode=PPLC&maxRows=10&username=btssetnl
+PPLA
+http://api.geonames.org/searchJSON?formatted=true&continentCode=AS&country=US&featureCode=PPLA&maxRows=10&username=btssetnl
+PPLA2
+http://api.geonames.org/searchJSON?formatted=true&continentCode=NA&country=US&featureCode=PPLA2&maxRows=10&username=btssetnl

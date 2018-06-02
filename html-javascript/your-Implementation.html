@@ -1,15 +1,266 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>HTML/Javascript Test</title>    
-    <script type="text/javascript">
+    <title>HTML/Javascript Test</title>   
+	
+	<script type="application/javascript" src="jquery-3.3.1.js" ></script>
+    <script type="application/javascript">
         //****************************** Begin of Your Javascript *****************************************************************************************************
         // Please write you javascript here.
+		var gdata = {
+			"geonamesUser": "btssetnl",
+			"countryinfo": {
+				"all": null,
+				"map": {}
+			},
+			"selectedContinent": new Set(),
+			"selectedCountry": null
+		};
+		
+		function cleanSelect($select) {
+			$select.children().remove();
+			var $option = $("<option/>");
+			$option.text("-- Please Select --");
+			$select.append($option);
+		}
+		
+		function loadCountryInfoFromGeoNames(sucCallBack) {
+			var url = "http://api.geonames.org/countryInfoJSON?username=" + gdata.geonamesUser + "&style=full";
+			$.ajax({
+					"url": url,
+					"success": function(data, status, jqXHR) {
+						gdata.countryinfo.all = data.geonames.sort(function(cinfoX, cinfoY) {
+							return cinfoX.countryName.localeCompare(cinfoY.countryName);
+						});
+						
+						$.each(data.geonames, function(index, cinfo) {
+							gdata.countryinfo.map[cinfo.countryCode] = cinfo;
+						});
+						
+						console.log("country info loaded");
+						sucCallBack();
+					},
+					"error": function(jqXHR, textStatus, errorThrow) {
+						alert("Load country info fail");
+						console.log("Load country info fail. textStatus='" + textStatus + "', errorThrow='" + errorThrow + "'");
+					}
+			});
+		}
+		
+		function reloadCountry(sucCallBack) {
+			if(gdata.selectedContinent.size == 0) {
+				cleanSelect($("#countrySel"));
+				cleanSelect($("#citySel"));
+				gdata.selectedCountry = null;
+			}
+			else {
+				var filterCountries = $.grep(gdata.countryinfo.all, function(cinfo) {
+					return gdata.selectedContinent.has(cinfo.continent);
+				});
+				
+				var $country = $("#countrySel");
+				$country.children().remove();
+				if(filterCountries.length > 0) {
+					var isSelectedCountryFound = false;
+					$.each(filterCountries, function(index, cinfo) {
+						var $option = $("<option/>");
+						$option.val(cinfo.countryCode);
+						$option.text(cinfo.countryName);
+						if(gdata.selectedCountry == cinfo.countryCode) {
+							isSelectedCountryFound = true;
+							$option.prop("selected", true);
+						}
+						$country.append($option);
+					});
+					
+					if(!isSelectedCountryFound) {
+						gdata.selectedCountry = null;
+					}
+				}
+				else {
+					cleanSelect($country);
+				}
+			}
+			
+			sucCallBack();
+		}
+		
+		function reloadCity(sucCallBack) {
+			var cinfo = gdata.countryinfo.map[gdata.selectedCountry];
+			var lang = cinfo.languages.split(",")[0];
 
-
-
-
-
+			var maxRow = 50;
+			var url = "http://api.geonames.org/searchJSON" +
+				"?continentCode=" + cinfo.continent + 
+				"&country=" + cinfo.countryCode + 
+				"&featureCode=PPLC&featureCode=PPLA&featureCode=PPLA2" + 
+				"&lang=" + lang +
+				"&username=" + gdata.geonamesUser
+				"&maxRows=" + maxRow;
+			console.log(url);
+			
+			$.ajax({
+					"url": url,
+					"success": function(data, status, jqXHR) {
+						cities = data.geonames.sort(function(cityInfoX, cityInfoY) {
+							return cityInfoX.name.localeCompare(cityInfoY.name);
+						});
+						
+						$citySel = $("#citySel");
+						$citySel.children().remove();
+						$.each(cities, function(index, cityInfo) {
+							$option = $("<option/>");
+							$option.val(cityInfo.geonameId);
+							$option.text(cityInfo.name);
+							$citySel.append($option);
+						});
+						
+						console.log("cities loaded. countryCode=" + cinfo.countryCode + " total=" + data.totalResultsCount + ", show first " + maxRow);
+						sucCallBack();
+					},
+					"error": function(jqXHR, textStatus, errorThrow) {
+						alert("Load cities info fail");
+						console.log("Load cities info fail. textStatus='" + textStatus + "', errorThrow='" + errorThrow + "'");
+					}
+			});
+		}
+		
+		function OnContinentCbChanged(event) {
+			
+			if(event.target.checked) {
+				gdata.selectedContinent.add(event.target.value);
+			}
+			else {
+				gdata.selectedContinent.delete(event.target.value);
+			}
+			
+			uiStage.fnEnter(uiStage.sRC);
+		}
+		
+		function OnCountrySelChanged(event) {
+			gdata.selectedCountry = event.target.value
+			
+			uiStage.fnEnter(uiStage.sRCT);
+		}
+		
+		var uiStage = {
+			"sLCI": 0,	// stage LoadCountryInfo
+			"sCIL": 1,	// stage CountryInfoLoaded
+			"sRC":  2,	// stage ReloadCountry
+			"sCR":  3,	// stage CountryReloaded
+			"sRCT": 4,	// stage ReloadCity
+			"sCTR": 5,	// stage CityLoaded
+			
+			"fnInit": function() {
+				var ulElmt = uiStage._uiElmt;
+				
+				var enable_sCIL = [];
+				var enable_sCR  = [];
+				var enable_sCTR = [];
+				ulElmt.enalbeMap[uiStage.sCIL] = enable_sCIL;
+				ulElmt.enalbeMap[uiStage.sCR] = enable_sCR;
+				ulElmt.enalbeMap[uiStage.sCTR] = enable_sCTR;
+				
+				// Continent checkboxs
+				var $continentCBs = $(".continentCB");
+				$.each($continentCBs, function(index, continentCB){
+					var $continentCB = $(continentCB);
+					ulElmt.all.push($continentCB);
+					enable_sCIL.push($continentCB);
+					enable_sCR.push($continentCB);
+					enable_sCTR.push($continentCB);
+				});
+				
+				// Country select
+				var $countrySel = $("#countrySel");
+				ulElmt.all.push($countrySel);
+				enable_sCIL.push($countrySel);
+				enable_sCR.push($countrySel);
+				enable_sCTR.push($countrySel);
+				
+				// City select
+				var $citySel = $("#citySel");
+				ulElmt.all.push($citySel);
+				enable_sCTR.push($citySel);
+				
+				
+				// binding event
+				$continentCBs.change(OnContinentCbChanged);
+				$countrySel.change(OnCountrySelChanged);
+			},
+			
+			"fnEnter": function(stage) {
+				var uiDisabledStatusDiff = new Map();
+				
+				// diable all ui
+				$.each(uiStage._uiElmt.all, function(index, $ui){
+					uiDisabledStatusDiff.set($ui, true);
+				});
+				
+				// enable stage ui
+				var enableUIs = uiStage._uiElmt.enalbeMap[stage];
+				if( enableUIs !== undefined) {
+					$.each(enableUIs, function(index, $ui) {
+						uiDisabledStatusDiff.set($ui, false);
+					});
+				}
+				
+				// apply ui disabled statue
+				uiDisabledStatusDiff.forEach(function(isToDisable, $ui, map) {
+					var isUiDisabled = $ui.prop("disabled");
+					if(isUiDisabled != isToDisable) {
+						$ui.prop("disabled", isToDisable);
+					}
+				});
+				
+				switch(stage) {
+					case uiStage.sLCI:
+						loadCountryInfoFromGeoNames(function() { uiStage.fnEnter(uiStage.sCIL); });
+						break;
+					case uiStage.sCIL:
+						// set default value for selectd continent
+						$(".continentCB")[0].click();
+						break;
+					case uiStage.sRC:
+						reloadCountry(function() { uiStage.fnEnter(uiStage.sCR); });
+						break;
+					case uiStage.sCR:
+						// set default value for select country
+						var $countrySel = $("#countrySel");
+						if(gdata.selectedContinent.size == 0) {
+							$countrySel.prop("disabled", true);
+						}
+						else if(gdata.selectedCountry == null) {
+							$countrySel.change();
+						}
+						else if(gdata.selectedCountry != $("#countrySel").val()) {
+							$countrySel.val(gdata.selectedCountry);
+						}
+						else {
+							uiStage.fnEnter(uiStage.sCTR);
+						}
+						break;
+					case uiStage.sRCT:
+						reloadCity(function() { uiStage.fnEnter(uiStage.sCTR); });
+						break;
+					case uiStage.sCTR:
+						break;
+				}
+			},
+			
+			"_uiElmt": {
+				"all": [],
+				"enalbeMap": {}
+			}
+		}
+		
+		$(function(){
+			//console.log("hello");
+			
+			uiStage.fnInit();
+			uiStage.fnEnter(uiStage.sLCI);
+		});
+		
         //****************************** End of Your Javascript *****************************************************************************************************
 	</script>
 </head>
@@ -23,14 +274,14 @@
                             Continent
                         </td>
                         <td>
-                            <input type="checkbox" value="AF" checked="checked" />Africa
-                            <input type="checkbox" value="AS" />Asia
-                            <input type="checkbox" value="EU" />Europe
-                            <input type="checkbox" value="NA" />North American
+                            <input class="continentCB" type="checkbox" value="AF" />Africa
+                            <input class="continentCB" type="checkbox" value="AS" />Asia
+                            <input class="continentCB" type="checkbox" value="EU" />Europe
+                            <input class="continentCB" type="checkbox" value="NA" />North American
                             <br />
-                            <input type="checkbox" value="OC" />Oceania
-                            <input type="checkbox" value="SA" />South American
-                            <input type="checkbox" value="AN" />Anetatika
+                            <input class="continentCB" type="checkbox" value="OC" />Oceania
+                            <input class="continentCB" type="checkbox" value="SA" />South American
+                            <input class="continentCB" type="checkbox" value="AN" />Anetatika
                         </td>
                     </tr>
                     <tr>
@@ -38,7 +289,7 @@
                             Country
                         </td>
                         <td>
-                            <select>
+                            <select id="countrySel">
                                 <option>-- Please Select --</option>
                             </select>
                         </td>
@@ -48,7 +299,7 @@
                             City
                         </td>
                         <td>
-                            <select>
+                            <select id="citySel">
                                 <option>-- Please Select --</option>
                             </select>
                         </td>
@@ -64,11 +315,12 @@
                             <i>Please leave your comment or any explanation here for any thing that you want to
                                 return back to us.</i>
                             <ol>
-                                <li>comment #1</li>
-                                <li>comment #2</li>
-                                <li>comment #3</li>
-                                <li>comment #4</li>
-                                <li>etc...</li>
+								<li>I put original 'your-Implementation.html' to 'your-Implementation_original.html'. But it doesn't contain any javascript code in it. I am not sure if it is correct of not.</li>
+								<li>Using jQuery v3.3.1</li>
+								<li>When countries info & cities info loaded, it oututs the information to console</li>
+                                <li>I don't see any javascript function in this sample, so I don't know how to optimize it. For Example: searchMap(). </li>
+								<li>I don't know how to use web service to load cities properly. For country 'United State' it find 3040 records. So I just retreive first 50 records.</li>
+								<li>I have specified the lang arguments to retrieve cities info. It works for 'Tailiand', but not for 'Taiwan'.</li>
                             </ol>
                         </td>
                     </tr>
